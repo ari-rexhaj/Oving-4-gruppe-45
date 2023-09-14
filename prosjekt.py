@@ -1,3 +1,5 @@
+from statistics import mean
+
 temperaturer = [-5, 2, 6, 13, 9, 22, 28, 19, 24, 12, 5, 1, -3, -8, 2, 8, 15, 18, 216, 21, 31, 15, 4, 1, -2]
 dogn_nedbor = [2, 5, 0, 0, 0, 3, 6, 4, 0, 0, 5, 0, 12, 12, 12, 12, 7, 19]
 
@@ -35,3 +37,29 @@ def nullzero_combo_finder(List):   # skrevet  av ann mari
 
     return null_combo
 
+def datasett(x, y):
+    a_top = 0
+    a_bot = 0
+
+    for i in range(0,len(x)):
+        a_top += (x[i]-mean(x))*(y[i]-mean(y))
+        a_bot += (x[i]-mean(x))**2
+
+    a = a_top/a_bot
+    b = mean(y)-a*mean(x)
+
+    return(a,b)
+
+def plantevekst(List):  #skrevet av ann mari
+    plant_temp = 0
+    plant_temp_sum = 0
+
+    for value in List:
+        plant_temp = value - 5
+
+        if plant_temp < 0:
+            plant_temp = 0 
+
+        plant_temp_sum += plant_temp
+        
+    return plant_temp_sum
