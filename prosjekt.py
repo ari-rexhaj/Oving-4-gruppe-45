@@ -7,21 +7,21 @@ temperaturer_tidspunkter = []
 for index in range(len(temperaturer)):
     temperaturer_tidspunkter.append(index)
 
-def check(ListFloat,Int):       # enter list and value, checks if values in list are greater or equal to Int value and returns list of those values
+def check(ListFloat,Int):           # enter list and value, checks if values in list are greater or equal to Int value and returns list of those values
     check_list = []
     for i in range(0,len(ListFloat)):
         if Int <= ListFloat[i]:
             check_list.append(ListFloat[i])
     return check_list
 
-def delta_finder(List):         # returns a list of deltas
+def delta_finder(List):             # returns a list of deltas
     delta_list = []
     for i in range(0,len(List)-1):
         delta = List[i+1] - List[i]
         delta_list.append(delta)
     return delta_list
 
-def nullzero_combo_finder(List):   # skrevet  av ann mari
+def nullzero_combo_finder(List):    # skrevet  av ann mari, finds how many conescutive zeros there are in a given list and returns int of them
     null_combo = 0
     temp_null_combo = 0
     
@@ -37,7 +37,7 @@ def nullzero_combo_finder(List):   # skrevet  av ann mari
 
     return null_combo
 
-def datasett(x, y):
+def datasett(x, y):                 # finds trend between 2 lists
     a_top = 0
     a_bot = 0
 
@@ -50,7 +50,7 @@ def datasett(x, y):
 
     return (a,b)
 
-def plantevekst(List):  #skrevet av ann mari
+def plantevekst(List):              # skrevet av ann mari, takes a list, removes 5 from each index, if any index is negative, turn it to zero, returns updated list
     plant_temp = 0
     plant_temp_sum = 0
 
