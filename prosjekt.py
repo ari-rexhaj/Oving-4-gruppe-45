@@ -48,7 +48,7 @@ def datasett(x, y):
     a = a_top/a_bot
     b = mean(y)-a*mean(x)
 
-    return(a,b)
+    return (a,b)
 
 def plantevekst(List):  #skrevet av ann mari
     plant_temp = 0
