@@ -1,4 +1,7 @@
 from statistics import mean
+import matplotlib.pyplot as mpl
+from datetime import datetime
+from collections import defaultdict
 
 temperaturer = [-5, 2, 6, 13, 9, 22, 28, 19, 24, 12, 5, 1, -3, -8, 2, 8, 15, 18, 21, 26, 21, 31, 15, 4, 1, -2]
 dogn_nedbor = [2, 5, 0, 0, 0, 3, 6, 4, 0, 0, 5, 0, 12, 12, 12, 12, 7, 19]
@@ -14,6 +17,12 @@ def check(ListFloat,Int):           # enter list and value, checks if values in 
             check_list.append(ListFloat[i])
     return check_list
 
+def reverse_check(ListFloat,Int):           # enter list and value, checks if values in list are greater or equal to Int value and returns list of those values
+    check_list = []
+    for i in range(0,len(ListFloat)):
+        if Int > ListFloat[i]:
+            check_list.append(ListFloat[i])
+    return check_list
 
 def delta_finder(List):             # returns a list of deltas
     delta_list = []
@@ -116,12 +125,12 @@ Processed_data = []
 def lagre_som_hashmap(list_data):
     for data in list_data:
         i = 0
-        temp_dict = {"Sted":"","Stasjon":"","Dato":"","Snødybde":0.0,"Middel temperatur":0.0,"Gjennomsnittlig skydekke":0.0,"Høyeste middelvind":0.0}
+        temp_dict = {"Sted":"","Stasjon":"","Dato":"","Snødybde":0.0,"Nedbør":0.0,"Middel temperatur":0.0,"Gjennomsnittlig skydekke":0.0,"Høyeste middelvind":0.0}
 
         for value in data.split(";"):
 
             if value == "-" or value == "-\n":
-                value = "ingen data"
+                value = "?"
                 continue
 
             if i > 2:
@@ -137,16 +146,19 @@ def lagre_som_hashmap(list_data):
                 case 3:
                     temp_dict["Snødybde"] = float(value)
                 case 4:
-                    temp_dict["Middel temperatur"] = float(value)
+                    temp_dict["Nedbør"] = float(value)
                 case 5:
-                    temp_dict["Gjennomsnittlig skydekke"] = float(value)
+                    temp_dict["Middel temperatur"] = float(value)
                 case 6:
+                    temp_dict["Gjennomsnittlig skydekke"] = float(value)
+                case 7:
                     temp_dict["Høyeste middelvind"] = float(value)
             i += 1
 
         Processed_data.append(temp_dict)
     return Processed_data 
 
+stasjon_name_list = ['SN12960','SN13420','SN10380','SN40420','SN69100']
 
 def fordel_data_per_stasjon(dict_list:list[dict]):
 
@@ -176,7 +188,7 @@ def er_i_skisesong(Dato):
     if int(Dato[3:5]) >= 10 or int(Dato[3:5]) <= 6:
         return True
     else:
-        return False     
+        return False
 
 def finn_skifører(dict_list:list[dict]):
 
@@ -213,17 +225,189 @@ for stasjon in stasjon_data_list:
 
     skifører_list.append(temp_list)
 
-def Prep_trend_data(dict_list:list[dict]):
+def data_for_year(dict_list:list[dict],wanted_data,filter_val):
 
-    aar_list = [] #this shit dont make sense
-    skisesong_list = []
+    temp_dict = {}
 
     for data in dict_list:
         if er_i_skisesong(data["Dato"]):
-            aar_list.append(int(data["Dato"][6:10]))
-            skisesong_list.append(data["Snødybde"])
+            if data["Dato"][6:10] in temp_dict.keys():
+                if data[wanted_data] > filter_val:
+                    temp_dict[data["Dato"][6:10]] += 1
+            else: 
+                temp_dict.update({data["Dato"][6:10]:1})
 
-    return ((aar_list,skisesong_list))
+    return (temp_dict)
 
-xy_list = Prep_trend_data(stasjon_data_list[0])
+color_list = ['red','blue','yellow','green','purple']
+for i in range(0,len(stasjon_data_list)):
+    xy_list = data_for_year(stasjon_data_list[i],"Snødybde",20)
 
+    aar_list = []
+    lengde_list = []
+
+    for aar in xy_list.keys():
+
+        aar_list.append(int(aar))
+        lengde_list.append(xy_list[aar])
+
+    mpl.scatter(aar_list,lengde_list,color=color_list[i],label=f'stasjon {stasjon_name_list[i]}')
+
+    #print("trend for stasjon",i,datasett(aar_list,lengde_list))
+
+all_aar_list = aar_list
+
+mpl.title("snow depth for all stasjon")
+mpl.legend()
+mpl.show()
+
+def data_filterer(input_dict,data_wanted,min_data):
+    preproccesed = {}
+    for data in input_dict:
+        if data[data_wanted] == '?':
+            continue
+
+        year = int(data['Dato'][6:10])
+
+        if year not in preproccesed:
+            preproccesed[year] = [data[data_wanted]]
+        else:
+            preproccesed[year].append(data[data_wanted])
+
+    proccesed = {}
+
+    for year in preproccesed:
+        if len(preproccesed[year]) > (min_data-1):
+            proccesed[year] = preproccesed[year]
+
+    return proccesed
+        
+for i in range(0,len(stasjon_data_list)):
+
+    xy_list = data_filterer(stasjon_data_list[i],"Middel temperatur",300)
+
+    aar_list = []
+    lengde_list = []
+
+    for aar in xy_list.keys():
+
+        aar_list.append(int(aar))
+        lengde_list.append(plantevekst(xy_list[aar]))
+
+    mpl.plot(aar_list,lengde_list,color=color_list[i],label=f'stasjon {stasjon_name_list[i]}')
+mpl.title("plantevekst for hver stasjon")
+mpl.legend()
+mpl.show()
+
+for i in range(0,len(stasjon_data_list)):
+
+    xy_list = data_filterer(stasjon_data_list[i],"Nedbør",300)
+
+    aar_list = []
+    lengde_list = []
+
+    for aar in xy_list.keys():
+
+        aar_list.append(int(aar))
+        lengde_list.append(nullzero_combo_finder(xy_list[aar]))
+
+    print(lengde_list[0])
+    mpl.plot(aar_list,lengde_list,color=color_list[i],label=f'stasjon {stasjon_name_list[i]}')
+mpl.title("lengste tørke per år for hver stasjon")
+mpl.legend()
+mpl.show()
+
+#drep meg
+for i in range(0,len(stasjon_data_list)):
+
+    xy_list = data_filterer(stasjon_data_list[i],"Gjennomsnittlig skydekke",300)
+
+    aar_list = []
+    lengde_list = []
+
+    for aar in xy_list.keys():
+
+        aar_list.append(int(aar))
+        lengde_list.append(sum(reverse_check(xy_list[aar],3)))
+
+    mpl.plot(aar_list,lengde_list,color=color_list[i],label=f'stasjon {stasjon_name_list[i]}')
+mpl.title("antall penværsdager per år for all stasjon")
+mpl.legend()
+mpl.show()
+
+for i in range(0,len(stasjon_data_list)):
+
+    xy_list = data_filterer(stasjon_data_list[i],"Høyeste middelvind",300)
+
+    aar_list = []
+    lengde_list = []
+
+    for aar in xy_list.keys():
+
+        aar_list.append(int(aar))
+        lengde_list.append(max(xy_list[aar]))
+
+    mpl.plot(aar_list,lengde_list,color=color_list[i],label=f'stasjon {stasjon_name_list[i]}')
+mpl.title("høyeste middelvind per år for all stasjon")
+mpl.legend()
+mpl.show()
+
+for i in range(0,len(stasjon_data_list)):
+
+    xy_list = data_filterer(stasjon_data_list[i],"Høyeste middelvind",300)
+
+    aar_list = []
+    lengde_list = []
+
+    for aar in xy_list.keys():
+
+        aar_list.append(int(aar))
+        lengde_list.append(sorted(xy_list[aar])[round(len(xy_list)/2)])
+
+    mpl.plot(aar_list,lengde_list,color=color_list[i],label=f'stasjon {stasjon_name_list[i]}')
+mpl.title("median middelvind per år for all stasjon")
+mpl.legend()
+mpl.show()
+
+def monthly_average(temp_dict):
+    month_temp = defaultdict(list)
+
+    for data in temp_dict:
+        dato = data["Dato"]
+        temp = data["Middel temperatur"]
+
+        if temp == '?':
+            continue
+
+        date_obj = datetime.strptime(dato,'%d.%m.%Y')
+        month_year = date_obj.strftime('%B %Y')
+
+        month_temp[month_year].append(temp)
+
+    month_averages = {month:sum(temps) / len(temps) for month, temps in month_temp.items()}
+    return month_averages
+
+
+for i in range(0,len(stasjon_data_list)):
+    monthly_average_temp = monthly_average(stasjon_data_list[i])
+    sorted_months = sorted(monthly_average_temp.keys(),key=lambda d: datetime.strptime(d,'%B %Y'))
+    sorted_avg_temp = [monthly_average_temp[month] for month in sorted_months]
+
+    mpl.plot(sorted_months,sorted_avg_temp,color=color_list[i],label=f'stasjon {stasjon_name_list[i]}')
+mpl.title("avg temp per month per år for all stasjon")
+mpl.xticks(rotation=90)
+mpl.legend()
+mpl.show()
+
+for i in range(0,len(stasjon_data_list)):
+    monthly_average_temp = monthly_average(stasjon_data_list[i])
+    sorted_months = sorted(monthly_average_temp.keys(),key=lambda d: datetime.strptime(d,'%B %Y'))
+    sorted_avg_temp = [monthly_average_temp[month] for month in sorted_months]
+
+    temp_delta = delta_finder(sorted_avg_temp)
+
+    mpl.plot(sorted_months[1:],temp_delta,color=color_list[i],label=f'stasjon {stasjon_name_list[i]}')
+mpl.title("delta temp per month år for all stasjon")
+mpl.xticks(rotation=90)
+mpl.legend()
+mpl.show()
